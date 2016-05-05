@@ -112,17 +112,33 @@ var exampleValidValues = {
   'longitude': '0'
 };
 
+var customErrors = {
+  customError: function customError(validatorId, label, opts) {
+    return 'Custom error message';
+  }
+};
+
 describe('buildValidationFn', function () {
   var formSchema = (0, _2.default)(exampleSchema);
   var fields = formSchema.fields;
   var validate = formSchema.validate;
+  var errors = formSchema.errors;
+
 
   it('should build a redux form validation fn based on a schema', function () {
     _should2.default.exist(formSchema);
-    formSchema.should.have.keys('fields', 'validate');
+    formSchema.should.have.keys('fields', 'validate', 'errors');
     fields.should.be.an.Array();
     fields.should.eql(Object.keys(exampleSchema));
     validate.should.be.a.Function();
+    errors.should.be.a.Object();
+  });
+
+  it('should build a redux form validation fn with custom errors', function () {
+    var customErrorformSchema = (0, _2.default)(exampleSchema, customErrors);
+    var customFormErrors = formSchema.errors;
+
+    customFormErrors.should.have.property('customError');
   });
 
   it('should validate valid values', function () {

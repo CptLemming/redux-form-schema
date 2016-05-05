@@ -12,6 +12,10 @@ var _each = require('lodash/collection/each');
 
 var _each2 = _interopRequireDefault(_each);
 
+var _merge = require('lodash/object/merge');
+
+var _merge2 = _interopRequireDefault(_merge);
+
 var _startCase = require('lodash/string/startCase');
 
 var _startCase2 = _interopRequireDefault(_startCase);
@@ -30,20 +34,22 @@ var _isString2 = _interopRequireDefault(_isString);
 
 var _errorMessages = require('./error-messages');
 
-var _errorMessages2 = _interopRequireDefault(_errorMessages);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = function (schema) {
+  var customErrorMessages = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
   var fields = Object.keys(schema);
-  var validate = buildValidationFn(schema);
+  var errorMessages = (0, _merge2.default)(_errorMessages.errors, customErrorMessages);
+  var validate = buildValidationFn(schema, errorMessages);
   return {
     fields: fields,
-    validate: validate
+    validate: validate,
+    errors: errorMessages
   };
 };
 
-function buildValidationFn(schema) {
+function buildValidationFn(schema, errorMessages) {
   return function (formValues) {
     var errors = {};
 
@@ -70,14 +76,15 @@ function buildValidationFn(schema) {
 
       // validate required
       if (isRequired && !fieldValueExists) {
-        addErrorToField(errors, fieldRef, error || (0, _errorMessages2.default)('required', label));
+        var message = error || (0, _errorMessages.errorMessageGenerator)(errorMessages, 'required', label);
+        addErrorToField(errors, fieldRef, message);
       }
 
       // validate simple type validators
       if (fieldValueExists && type && !validates(type, fieldValue)) {
         // use custom error message or fallback to default
-        var message = error || (0, _errorMessages2.default)(type, label);
-        addErrorToField(errors, fieldRef, message);
+        var _message = error || (0, _errorMessages.errorMessageGenerator)(errorMessages, type, label);
+        addErrorToField(errors, fieldRef, _message);
       }
 
       // validate complex validations
@@ -95,7 +102,7 @@ function buildValidationFn(schema) {
             return;
           }
 
-          var isValid = undefined;
+          var isValid = void 0;
           var customValidator = (0, _isFunction2.default)(opts) && opts;
 
           if (customValidator) {
@@ -106,8 +113,8 @@ function buildValidationFn(schema) {
 
           if (!isValid) {
             // use custom error message or fallback to default
-            var message = error || (0, _errorMessages2.default)(id, label, opts);
-            addErrorToField(errors, fieldRef, message);
+            var _message2 = error || (0, _errorMessages.errorMessageGenerator)(errorMessages, id, label, opts);
+            addErrorToField(errors, fieldRef, _message2);
           }
         });
       }
